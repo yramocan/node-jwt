@@ -8,12 +8,24 @@ let users = []
 
 exports.login = function(req, res) {
   const user = users.find(user => user.email === req.body.email)
-  const accessToken = generateAccessToken(user)
-  const refreshToken = generateRefreshToken(user)
 
-  res.json({ 
-    accessToken: accessToken, 
-    refreshToken: refreshToken 
+  if (user == null) {
+    return res.sendStatus(401)
+  }
+
+  checkPassword(req.body.password, user)
+  .then((isCorrect) => {
+    if (!isCorrect) return res.status(401).send({ message: "Incorrect password." })
+
+    const { password, ...usr } = user
+    
+    res.json({
+      ...usr,
+      accessToken: generateAccessToken(usr), 
+      refreshToken: generateRefreshToken(usr) 
+    })
+  }).catch((err) => {
+    return res.status(500).send(err)
   })
 }
 
@@ -71,6 +83,14 @@ function addUser(name, email, password) {
     id: Date.now().toString(),
     name: name,
     email: email
+  }
+}
+
+async function checkPassword(password, user) {
+  try {
+    return await bcrypt.compare(password, user.password)
+  } catch {
+    throw new Error("An error occurred while verifying the password.")
   }
 }
 
