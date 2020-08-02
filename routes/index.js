@@ -2,24 +2,17 @@ require("dotenv").config()
 
 const jwt = require("jsonwebtoken")
 const express = require("express")
-const app = express()
+const router = express.Router()
 
-app.use(express.json())
+const authRoutes = require("./authentication")
+const postsRoutes = require("./posts")
 
-const posts = [
-  {
-    username: "Yuri",
-    title: "Post 1",
-  },
-  {
-    username: "Maya",
-    title: "Post 2",
-  },
-]
-
-app.get("/posts", authenticateToken, (req, res) => {
-  res.json(posts.filter(post => post.username === req.user.name))
+router.get("/", (req, res) => {
+  res.render("index.ejs", { name: "Yuri" })
 })
+
+router.use("/", authRoutes)
+router.use("/posts", authenticateToken, postsRoutes)
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"]
@@ -34,4 +27,4 @@ function authenticateToken(req, res, next) {
   })
 }
 
-app.listen(3000)
+module.exports = router;
